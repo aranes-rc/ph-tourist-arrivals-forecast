@@ -179,17 +179,16 @@ class ProphetCountrySpecificModels:
             print(f"Error forecasting for {country}: {e}")
             return country, 0, None
 
-    def forecast_top_countries(self, start_date, months_to_forecast, count=None, return_full_forecasts=False):
+    def forecast_top_countries(self, start_date, months_to_forecast, count=None):
         """Forecast all countries in parallel and return top performances"""
         if count is None:
-            count = 5
+            count = 10
         
         # Prepare future dataframe once
         future_df = create_future_dataframe(start_date, months_to_forecast)
         self._add_feature_columns_to_future(future_df)
         
         forecast_totals = {}
-        full_forecasts = {} if return_full_forecasts else None
         
         # Use ThreadPoolExecutor for forecasting
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -203,20 +202,18 @@ class ProphetCountrySpecificModels:
                     country, total, forecast = future.result()
                     if total > 0:  # Only include successful forecasts
                         forecast_totals[country] = total
-                        if return_full_forecasts:
-                            full_forecasts[country] = forecast
                 except Exception as e:
                     country = future_to_country[future]
                     print(f"Error in forecast for {country}: {e}")
 
         # Sort and return top countries
-        results = dict(sorted(forecast_totals.items(), key=lambda item: item[1], reverse=True))
-        top_results = dict(list(results.items())[:count])
+        results = sorted(
+            [{"name": key.title(), "value": value} for key, value in forecast_totals.items()],
+            key=lambda x: x["value"],
+            reverse=True
+        )[:count]
         
-        if return_full_forecasts:
-            return top_results, {k: v for k, v in full_forecasts.items() if k in top_results}
-        
-        return top_results
+        return results
     
     def _add_feature_columns_to_future(self, future_df):
         """Add feature columns to future dataframe"""

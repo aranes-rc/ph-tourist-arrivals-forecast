@@ -15,7 +15,7 @@ export const SkeletonLoadingMedium = () => {
 export const GraphSkeletonLoading = () => {
     return (
         <div className='h-[30rem] max-h-30 overflow-y-auto flex justify-center items-center'>
-            <SyncLoader color="#3B19C2" size={15} margin={5} />
+            <SyncLoader color="#b88909" size={15} margin={5} />
         </div>
     );
 };
@@ -23,7 +23,7 @@ export const GraphSkeletonLoading = () => {
 export const ExportButtonLoader = () => {
     return (
         <div className='flex items-center gap-3 border border-gray2 py-2 px-4 rounded-md'>
-            <BarLoader color="#3B19C2" />
+            <BarLoader color="#b88909" />
         </div>
     );
 };
