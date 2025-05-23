@@ -2,7 +2,7 @@
 
 A comprehensive forecasting web application that predicts tourist arrivals to the Philippines using advanced time series analysis with Facebook Prophet. Built with React, Vite, TailwindCSS, Python Flask, and Prophet.
 
-![Preview](./docs/media/preview.mp4)
+![GIF Preview](./docs/media/preview.gif)
 
 > **NOTE**: The data used for the training of the model discussed in this README is a more aggregated version of the dataset. 
 
@@ -14,7 +14,7 @@ This forecasting system provides two key predictions:
 
 ## 📊 Dataset Overview
 
-The system uses publicly available monthly tourist arrival data from the **Department of Tourism of the Philippines**, spanning from **2008 to April 2025**. The dataset structure is straightforward:
+The system uses publicly available monthly tourist arrival data from the **Department of Tourism (DOT) of the Philippines**, spanning from **2008 to April 2025**. The dataset structure is straightforward:
 
 ```
 Date        Arrivals
@@ -24,6 +24,8 @@ Date        Arrivals
 2008-04-01  235895
 2008-05-01  242822
 ```
+
+The raw dataset can be downloaded from here: [Tourism Demand Statistics](http://www.tourism.gov.ph/tourism_dem_sup_pub.aspx)
 
 ## 📈 Raw Data Visualization
 
@@ -238,6 +240,10 @@ The MAPE of 4.5% indicates excellent forecast accuracy, with the model's predict
 - **Forecasting**: Facebook Prophet
 - **Data Processing**: pandas, numpy
 - **Visualization**: matplotlib, plotly
+
+## ✨ Final UI Look
+
+![Preview](./docs/media/web_preview.png)
 
 ## 🚀 Getting Started
 
