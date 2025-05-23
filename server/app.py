@@ -6,11 +6,18 @@ from prophet_model import ProphetTourismModel
 app = Flask(__name__)
 CORS(app)
 
-MODEL_PATH = './model/prophet_model.json'
-DATA_PATH = './dataset/tourism_prophet_dataset.csv'
+AGGREGATED_MODEL_PATH = './model/aggregated_model.json'
+AGGREGATED_DATA_PATH = './dataset/aggregated_dataset.csv'
+
+COUNTRY_SPECIFIC_DATA_PATH = './dataset/country_monthly_dataset.csv'
 
 try:
-    tourism_model = ProphetTourismModel(MODEL_PATH, DATA_PATH)
+    tourism_model = ProphetTourismModel(
+        AGGREGATED_MODEL_PATH,
+        AGGREGATED_DATA_PATH,
+        COUNTRY_SPECIFIC_DATA_PATH
+    )
+
     print("Tourism forecasting model initialized successfully")
 except Exception as e:
     print(f"Error initializing model: {str(e)}")
@@ -81,6 +88,76 @@ def forecast():
             }), 400
         
         result = tourism_model.forecast(start_date, months_to_forecast)
+        
+        if result['success']:
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Internal server error: {str(e)}'
+        }), 500
+
+@app.route('/forecast-top-countries', methods=['POST'])
+def forecast_top_countries():
+    """
+    Forecast tourist arrivals
+    
+    Expected JSON payload:
+    {
+        "start_date": "2024-01-01",
+        "months_to_forecast": 12,
+        "count": 10 (optional)
+    }
+    """
+    try:
+        if not tourism_model:
+            return jsonify({
+                'success': False,
+                'error': 'Model not initialized'
+            }), 500
+        
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No JSON data provided'
+            }), 400
+        
+        start_date = data.get('start_date')
+        months_to_forecast = data.get('months_to_forecast')
+        count = data.get('count')
+        
+        if not start_date:
+            return jsonify({
+                'success': False,
+                'error': 'start_date is required'
+            }), 400
+        
+        if not months_to_forecast:
+            return jsonify({
+                'success': False,
+                'error': 'months_to_forecast is required'
+            }), 400
+        
+        try:
+            months_to_forecast = int(months_to_forecast)
+        except ValueError:
+            return jsonify({
+                'success': False,
+                'error': 'months_to_forecast must be an integer'
+            }), 400
+        
+        if months_to_forecast <= 0:
+            return jsonify({
+                'success': False,
+                'error': 'months_to_forecast must be greater than 0'
+            }), 400
+        
+        result = tourism_model.forecast_top_countries(start_date, months_to_forecast, count)
         
         if result['success']:
             return jsonify(result)
@@ -170,14 +247,12 @@ def model_info():
         })
 
 if __name__ == '__main__':
-    if not os.path.exists(MODEL_PATH):
-        print(f"Warning: Model file {MODEL_PATH} not found")
-    
     print("Starting Tourism Forecast API server...")
     print("Available endpoints:")
-    print("  GET  /           - Health check")
-    print("  POST /forecast   - Generate forecast")
-    print("  POST /export     - Export forecast to file")
-    print("  GET  /model-info - Get model information")
+    print("  GET  /                         - Health check")
+    print("  POST /forecast                 - Generate forecast")
+    print("  POST /forecast-top-countries   - Generate forecast for top countries")
+    print("  POST /export                   - Export forecast to file")
+    print("  GET  /model-info               - Get model information")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)

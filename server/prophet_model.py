@@ -1,66 +1,55 @@
 import pandas as pd
 from prophet.serialize import model_from_json
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from prophet_country_model import ProphetCountrySpecificModels
+from utils import create_future_dataframe, COVID_OUTBREAK_DATE, COVID_RECOVERY_DATE
 import json
 
-COVID_OUTBREAK_DATE = '2020-02-01'
-COVID_RECOVERY_DATE = '2023-07-01'
-
 class ProphetTourismModel:
-    def __init__(self, model_path, data_path=None):
-        self.model_path = model_path
-        self.data_path = data_path
+    def __init__(
+        self, 
+        aggregated_model_path, 
+        aggregated_data_path,
+        country_monthly_data_path,
+    ):
+        self.aggregated_model_path = aggregated_model_path
+        self.aggregated_data_path = aggregated_data_path
 
-        self.model = None
-        self.historical_data = None
+        self.aggregated_model = None
+        self.aggregated_historical_data = None
 
-        self.load_model()
-
-        if data_path:
-            self.load_historical_data()
+        self.prophet_countries = ProphetCountrySpecificModels(
+            data_path=country_monthly_data_path,
+            max_workers=8,  # TODO: Remove this
+            cache_models=True
+        )
+        
+        self.load_aggregated_model()
+        self.load_historical_data()
     
-    def load_model(self):
+    def load_aggregated_model(self):
         try:
-            with open(self.model_path, 'r') as f:
+            with open(self.aggregated_model_path, 'r') as f:
                 model = model_from_json(f.read())
             
-            self.model = model
-            print(f"Model loaded successfully from {self.model_path}")
+            self.aggregated_model = model
+            print(f"Aggregated model loaded successfully from {self.aggregated_model_path}")
         except Exception as e:
-            raise Exception(f"Error loading model: {str(e)}")
+            raise Exception(f"Error loading aggregated model: {str(e)}")
     
     def load_historical_data(self):
         try:
-            self.historical_data = pd.read_csv(self.data_path)
-            self.historical_data['ds'] = pd.to_datetime(self.historical_data['ds'])
-            print(f"Historical data loaded successfully from {self.data_path}")
+            self.aggregated_historical_data = pd.read_csv(self.aggregated_data_path)
+            self.aggregated_historical_data['ds'] = pd.to_datetime(self.aggregated_historical_data['ds'])
+            print(f"The aggregated historical data has been loaded successfully!")
         except Exception as e:
             raise Exception(f"Error loading historical data: {str(e)}")
     
-    def create_future_dataframe(self, start_date, months_to_forecast):
-        try:
-            start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-            
-            future_dates = []
-            current_date = start_dt
-            
-            for i in range(months_to_forecast):
-                future_dates.append(current_date)
-                current_date = current_date + relativedelta(months=1)
-            
-            future_df = pd.DataFrame({'ds': future_dates})
-            return future_df
-            
-        except Exception as e:
-            raise Exception(f"Error creating future dataframe: {str(e)}")
-    
     def forecast(self, start_date, months_to_forecast):
         try:
-            if not self.model:
-                raise Exception("Model not loaded")
+            if not self.aggregated_model:
+                raise Exception("Aggregated model is not loaded")
             
-            future_df = self.create_future_dataframe(start_date, months_to_forecast)
+            future_df = create_future_dataframe(start_date, months_to_forecast)
 
             future_df['pre_covid'] = pd.to_datetime(future_df['ds']) < pd.to_datetime(COVID_OUTBREAK_DATE)
             future_df['has_covid'] = (
@@ -72,7 +61,7 @@ class ProphetTourismModel:
             for i, month in enumerate(months, 1):
                 future_df[f'is_{month}'] = (future_df['ds'].dt.month == i).astype(int)
 
-            forecast = self.model.predict(future_df)
+            forecast = self.aggregated_model.predict(future_df)
             
             results = []
             
@@ -81,9 +70,9 @@ class ProphetTourismModel:
                 prediction = float(forecast.iloc[i]['yhat'])
                 
                 actual = None
-                if self.historical_data is not None:
-                    actual_row = self.historical_data[
-                        self.historical_data['ds'].dt.strftime('%Y-%m-%d') == date_str
+                if self.aggregated_historical_data is not None:
+                    actual_row = self.aggregated_historical_data[
+                        self.aggregated_historical_data['ds'].dt.strftime('%Y-%m-%d') == date_str
                     ]
                     if not actual_row.empty:
                         actual = float(actual_row.iloc[0]['y'])
@@ -104,6 +93,25 @@ class ProphetTourismModel:
                 }
             }
             
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+                'data': []
+            }
+    
+    def forecast_top_countries(self, start_date, months_to_forecast, count=None):
+        try:
+            results = self.prophet_countries.forecast_top_countries(start_date, months_to_forecast, count)
+                
+            return {
+                'success': True,
+                'data': results,
+                'metadata': {
+                    'start_date': start_date,
+                    'months_forecasted': months_to_forecast
+                }
+            }
         except Exception as e:
             return {
                 'success': False,
