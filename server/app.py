@@ -6,8 +6,8 @@ from prophet_model import ProphetTourismModel
 app = Flask(__name__)
 CORS(app)
 
-MODEL_PATH = 'prophet_model.json'
-DATA_PATH = 'tourism_prophet_dataset.csv'
+MODEL_PATH = './model/prophet_model.json'
+DATA_PATH = './dataset/tourism_prophet_dataset.csv'
 
 try:
     tourism_model = ProphetTourismModel(MODEL_PATH, DATA_PATH)

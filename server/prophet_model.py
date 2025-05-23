@@ -25,7 +25,8 @@ class ProphetTourismModel:
             with open(self.model_path, 'r') as f:
                 model = model_from_json(f.read())
             
-            return model
+            self.model = model
+            print(f"Model loaded successfully from {self.model_path}")
         except Exception as e:
             raise Exception(f"Error loading model: {str(e)}")
     
@@ -60,6 +61,17 @@ class ProphetTourismModel:
                 raise Exception("Model not loaded")
             
             future_df = self.create_future_dataframe(start_date, months_to_forecast)
+
+            future_df['pre_covid'] = pd.to_datetime(future_df['ds']) < pd.to_datetime(COVID_OUTBREAK_DATE)
+            future_df['has_covid'] = (
+                (pd.to_datetime(future_df['ds']) > pd.to_datetime(COVID_OUTBREAK_DATE)) &
+                (pd.to_datetime(future_df['ds']) < pd.to_datetime(COVID_RECOVERY_DATE))
+            )
+
+            months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+            for i, month in enumerate(months, 1):
+                future_df[f'is_{month}'] = (future_df['ds'].dt.month == i).astype(int)
+
             forecast = self.model.predict(future_df)
             
             results = []
@@ -78,7 +90,7 @@ class ProphetTourismModel:
                 
                 results.append({
                     'date': date_str,
-                    'actuals': actual,
+                    'actual': actual,
                     'prediction': prediction
                 })
             

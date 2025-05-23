@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Manrope", sans-serif;
+  background-color: #f5f5fa;
+  @apply transition-colors;
+  zoom: 90%;
+}
+
+.fluid-container {
+  @apply max-w-5xl w-full mx-auto;
+}
+
+.hero-fluid-container {
+  @apply max-w-[75rem] w-full mx-auto;
+}
+
+.note-fluid-container {
+  @apply max-w-[95rem] w-full mx-auto;
+
+}
+
+.authors-container {
+  @apply max-w-[100rem] w-full mx-auto;
+}
+
+.authors-fluid-container {
+  @apply max-w-2xl w-full mx-auto;
+}
+
+.box-container {
+  @apply max-w-3xl w-full mx-auto;
+}
+
+.card-container {
+  @apply max-w-lg w-full mx-auto;
+}
+
+.fluid-card-container {
+  @apply max-w-5xl w-full mx-auto;
+}
+
+.graph-container {
+  @apply max-w-[100rem] w-full mx-auto;
+}
+
+.header {
+  @apply font-bold text-2xl;
+}
+
+.bigHeader {
+  @apply font-bold text-3xl;
+}
+
+.chart-container {
+  zoom: 111.11%;
+}
+
+body.dark {
+  @apply bg-darkBg text-gray-100
+}
+
+.transition-colors {
+  @apply duration-300 ease-in-out;
+}
